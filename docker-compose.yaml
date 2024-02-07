@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: 'nlw_expert_pg'
+    image: bitnami/postgresql:latest
+    ports:
+      - '${POSTGRES_PORT}:5432'
+    environment:
+      - 'POSTGRES_USER=${POSTGRES_USER}'
+      - 'POSTGRES_PASSWORD=${POSTGRES_PASSWORD}'
+      - 'POSTGRES_DB=${POSTGRES_DB}'
+      - 'POSTGRES_PORT=${POSTGRES_PORT}'
+    volumes:
+      - 'polls_pg_data:/bitnami/postgresql'
+
+  redis:
+    container_name: 'nlw_expert_redis'
+    image: bitnami/redis:latest
+    environment:
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+    ports:
+      - '${REDIS_PORT}:6379'
+    volumes:
+      - 'polls_redis_data:/bitnami/redis/data'
+
+volumes:
+  polls_pg_data:
+  polls_redis_data:
