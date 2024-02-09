@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
+import { redis } from '@/lib/redis';
 
 export async function getPoll(request: FastifyRequest, reply: FastifyReply) {
   const getPollParams = z.object({
@@ -31,5 +32,27 @@ export async function getPoll(request: FastifyRequest, reply: FastifyReply) {
     });
   }
 
-  return reply.send({ poll });
+  const result = await redis.zrange(pollId, 0, -1, 'WITHSCORES');
+  const votes = result.reduce(
+    (obj, line, index) => {
+      if (index % 2 === 0) {
+        const score = result[index + 1];
+
+        Object.assign(obj, {
+          [line]: Number(score),
+        });
+      }
+
+      return obj;
+    },
+    {} as Record<string, number>,
+  );
+
+  return reply.send({
+    ...poll,
+    options: poll.options.map(option => ({
+      ...option,
+      score: option.id in votes ? votes[option.id] : 0,
+    })),
+  });
 }
