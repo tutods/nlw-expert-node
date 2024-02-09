@@ -22,6 +22,14 @@ export async function createPoll(request: FastifyRequest, reply: FastifyReply) {
         },
       },
     },
+    include: {
+      options: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
   });
 
   return reply.status(201).send(poll);
