@@ -4,6 +4,7 @@ import fastify from 'fastify';
 import { routes } from './routes';
 
 const app = fastify();
+
 app
   // Cookies plugin
   .register(fastifyCookie, {
