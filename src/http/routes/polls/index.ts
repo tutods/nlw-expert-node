@@ -12,5 +12,5 @@ export async function pollsRoutes(fastify: FastifyInstance) {
   fastify.post('/', createPoll);
 
   // Route to add a vote to a specific poll
-  fastify.post('/:pollId/vote', voteOnPoll);
+  fastify.post('/:pollId/votes', voteOnPoll);
 }

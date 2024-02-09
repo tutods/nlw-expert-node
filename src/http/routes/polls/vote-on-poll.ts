@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
+import { redis } from '@/lib/redis';
 
 export async function voteOnPoll(request: FastifyRequest, reply: FastifyReply) {
   const voteOnPollParams = z.object({
@@ -16,7 +17,6 @@ export async function voteOnPoll(request: FastifyRequest, reply: FastifyReply) {
   const { optionId } = voteOnPollBody.parse(request.body);
 
   let { sessionId } = request.cookies;
-  console.log(sessionId);
 
   if (sessionId) {
     const userPreviousVoteOnPoll = await prisma.vote.findUnique({
@@ -36,6 +36,9 @@ export async function voteOnPoll(request: FastifyRequest, reply: FastifyReply) {
             id: userPreviousVoteOnPoll.id,
           },
         });
+
+        // Decrement the ranking of the previous `optionId` on `pollId`
+        await redis.zincrby(pollId, -1, userPreviousVoteOnPoll.optionId);
       } else {
         return reply.status(400).send({
           message: 'You already vote on this poll.',
@@ -62,6 +65,9 @@ export async function voteOnPoll(request: FastifyRequest, reply: FastifyReply) {
       optionId,
     },
   });
+
+  // Increment the ranking of `optionId` on `pollId`
+  await redis.zincrby(pollId, 1, optionId);
 
   return reply.status(201).send();
 }
