@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
+import { voting } from '@/utils/voting-pub-sub';
 
 export async function voteOnPoll(request: FastifyRequest, reply: FastifyReply) {
   const voteOnPollParams = z.object({
@@ -67,7 +68,12 @@ export async function voteOnPoll(request: FastifyRequest, reply: FastifyReply) {
   });
 
   // Increment the ranking of `optionId` on `pollId`
-  await redis.zincrby(pollId, 1, optionId);
+  const votes = await redis.zincrby(pollId, 1, optionId);
+
+  voting.publish(pollId, {
+    optionId,
+    votes: Number(votes),
+  });
 
   return reply.status(201).send();
 }
